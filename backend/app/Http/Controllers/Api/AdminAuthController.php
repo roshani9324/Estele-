@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminAuthController extends Controller
 {
-    /**
-     * Admin Login
-     */
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
@@ -22,10 +19,8 @@ class AdminAuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        // Check credentials
         if (
             !$user ||
-            !$user->password ||
             !Hash::check($credentials['password'], $user->password)
         ) {
             return response()->json([
@@ -34,18 +29,15 @@ class AdminAuthController extends Controller
             ], 401);
         }
 
-        // Check admin permission
         if (!$user->is_admin) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are not authorized to access the admin panel.',
+                'message' => 'Admin access required.',
             ], 403);
         }
 
-        // Remove previous tokens
         $user->tokens()->delete();
 
-        // Create new Sanctum token
         $token = $user
             ->createToken('admin-token')
             ->plainTextToken;
@@ -58,7 +50,7 @@ class AdminAuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'is_admin' => (bool) $user->is_admin,
+                    'is_admin' => true,
                 ],
                 'token' => $token,
                 'token_type' => 'Bearer',
@@ -66,39 +58,32 @@ class AdminAuthController extends Controller
         ]);
     }
 
-    /**
-     * Admin Logout
-     */
-    public function logout(Request $request): JsonResponse
-    {
-        $user = $request->user();
-
-        if ($user && $user->currentAccessToken()) {
-            $user->currentAccessToken()->delete();
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Admin logout successful.',
-        ]);
-    }
-
-    /**
-     * Get logged-in admin
-     */
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
 
         return response()->json([
             'success' => true,
-            'message' => 'Admin authenticated.',
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'is_admin' => (bool) $user->is_admin,
             ],
+        ]);
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $token = $request->user()->currentAccessToken();
+
+        if ($token) {
+            $token->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin logout successful.',
         ]);
     }
 }
