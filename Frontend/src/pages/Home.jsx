@@ -8,6 +8,7 @@ import CategorySection from "../components/home/CategorySection";
 import BrandInformation from "../components/home/BrandInformation";
 import Newsletter from "../components/home/Newsletter";
 import BrandStory from "../components/home/BrandStory";
+;
 export default function Home() {
   const { homeData, loading, error } = useHome();
 console.log("FIRST CATEGORY:", homeData?.categories?.[0]);

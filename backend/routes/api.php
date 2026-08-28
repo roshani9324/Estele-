@@ -14,17 +14,18 @@ use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\NewsletterController;
 use App\Http\Controllers\Api\StoreController;
-use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\HomeController;
-
+use App\Http\Controllers\Api\AdminAuthController;
+use App\Http\Controllers\Api\AdminDashboardController;
 
 /*
 |--------------------------------------------------------------------------
 | Public API Routes
 |--------------------------------------------------------------------------
 */
- //Home
-    Route::get('/home', [HomeController::class, 'index']);
+
+// Home
+Route::get('/home', [HomeController::class, 'index']);
 
 // Authentication
 Route::post('/register', [AuthController::class, 'register']);
@@ -64,13 +65,23 @@ Route::get('/stores', [StoreController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
-| Protected API Routes
+| Admin Authentication
+|--------------------------------------------------------------------------
+*/
+
+// Admin Login — PUBLIC
+Route::post('/admin/login', [AdminAuthController::class, 'login']);
+
+
+/*
+|--------------------------------------------------------------------------
+| Customer Protected Routes
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Authentication
+    // Customer Authentication
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
@@ -91,6 +102,42 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
 
     // Reviews
-    Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
+    Route::post(
+        '/products/{product}/reviews',
+        [ReviewController::class, 'store']
+    );
+});
+/*
+|--------------------------------------------------------------------------
+| Admin Authentication
+|--------------------------------------------------------------------------
+*/
+
+// Public Admin Login
+Route::post('/admin/login', [AdminAuthController::class, 'login']);
+
+/*
+|--------------------------------------------------------------------------
+| Admin Protected Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:sanctum', 'admin'])
+    ->prefix('admin')
+    ->group(function () {
+
+        // Logged-in Admin
+        Route::get('/me', [AdminAuthController::class, 'me']);
+
+        // Admin Logout
+        Route::post('/logout', [AdminAuthController::class, 'logout']);
+    });
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+
+    Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+
+    Route::post('/logout', [AdminAuthController::class, 'logout']);
+
+    Route::get('/me', [AdminAuthController::class, 'me']);
 
 });
